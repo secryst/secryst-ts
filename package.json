@@ -1,0 +1,34 @@
+{
+  "name": "@secryst/ml",
+  "version": "0.1.0",
+  "description": "TypeScript crystal: reveal the hidden reading of a script. Implements the interscript-ml contract (models.yaml index, IMF v1 zips).",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "yaml": "^2.5.0"
+  },
+  "peerDependencies": {
+    "onnxruntime-node": "^1.19.0"
+  },
+  "peerDependenciesMeta": {
+    "onnxruntime-node": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": { "node": ">=18" },
+  "repository": "secryst/secryst-ts",
+  "homepage": "https://secryst.github.io",
+  "keywords": ["transliteration", "g2p", "diacritization", "onnx", "interscript", "byt5"]
+}
