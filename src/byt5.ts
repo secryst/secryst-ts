@@ -34,7 +34,7 @@ export class Byt5 {
     if (ids.length === 1) return "";
     const hidden = (
       await this.encoder.run({
-        input_ids: new this.ort.Tensor("int32", BigInt64Array.from(ids.map(BigInt)), [1, ids.length]),
+        input_ids: new this.ort.Tensor("int64", BigInt64Array.from(ids.map(BigInt)), [1, ids.length]),
       })
     )["last_hidden_state"];
     const tokens = this.kv
@@ -64,7 +64,7 @@ export class Byt5 {
     for (let step = 0; step < maxSeqLength; step++) {
       const out = await this.decoder.run({
         input_ids: new this.ort.Tensor(
-          "int32", BigInt64Array.from(decoderIds.map(BigInt)), [1, decoderIds.length]),
+          "int64", BigInt64Array.from(decoderIds.map(BigInt)), [1, decoderIds.length]),
         encoder_hidden_states: hidden,
       });
       const token = this.argmaxLastRow(out["logits"]);
@@ -88,7 +88,7 @@ export class Byt5 {
     const generated: number[] = [];
     for (let step = 0; step < maxSeqLength; step++) {
       const results = await this.decoder.run({
-        input_ids: new this.ort.Tensor("int32", BigInt64Array.from(current.map(BigInt)), [1, current.length]),
+        input_ids: new this.ort.Tensor("int64", BigInt64Array.from(current.map(BigInt)), [1, current.length]),
         encoder_hidden_states: hidden,
         ...pasts,
       });
