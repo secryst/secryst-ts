@@ -1,5 +1,5 @@
 {
-  "name": "@secryst/ml",
+  "name": "secryst",
   "version": "0.1.0",
   "description": "TypeScript crystal: reveal the hidden reading of a script. Implements the interscript-ml contract (models.yaml index, IMF v1 zips).",
   "license": "BSD-3-Clause",

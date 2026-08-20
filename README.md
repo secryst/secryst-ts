@@ -1,4 +1,4 @@
-# @secryst/ml — TypeScript crystal
+# secryst — TypeScript crystal
 
 **Secryst** is coined from *scrying* + *crystal*: gazing into an opaque
 script to reveal its hidden reading — the vowels, phonemes, and word
@@ -14,7 +14,7 @@ index, IMF v1 model zips (sha256-verified), and shared golden sets
 ## Install
 
 ```
-npm install @secryst/ml onnxruntime-node
+npm install secryst onnxruntime-node
 ```
 
 `onnxruntime-node` is an optional peer: registry/index consumers can use
@@ -23,7 +23,7 @@ this package without it.
 ## Use
 
 ```js
-import { load } from "@secryst/ml";
+import { load } from "secryst";
 
 const model = await load("khm-latn-1.0");   // resolve -> download ->
                                              // sha256-verify -> cache
