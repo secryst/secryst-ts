@@ -11,18 +11,32 @@ export class Byt5 {
   private pastNames: string[] = [];
   readonly manifest: Manifest;
 
-  constructor(zipPath: string) {
-    const { manifest, graphs } = verifyAndRead(zipPath);
+  private constructor(ort: any, manifest: Manifest, kv: boolean) {
+    this.ort = ort;
     this.manifest = manifest;
+    this.kv = kv;
+  }
+
+  /** onnxruntime-node's session API is async create(buffer) — fromBuffer
+   * exists only in onnxruntime-web, so construction must be async. */
+  static async load(zipPath: string): Promise<Byt5> {
+    const { manifest, graphs } = verifyAndRead(zipPath);
     // Lazy peer: importing onnxruntime-node only at model load keeps
     // registry/manifest consumers dependency-free.
-    this.ort = require("onnxruntime-node");
-    this.kv = manifest.decoder === "kv" && graphs["decoder-kv.onnx"] !== undefined;
-    this.encoder = this.ort.InferenceSession.fromBuffer(graphs["encoder.onnx"]);
-    this.decoder = this.ort.InferenceSession.fromBuffer(
-      this.kv ? graphs["decoder-kv.onnx"] : graphs["decoder.onnx"],
+    const ort = require("onnxruntime-node");
+    const model = new Byt5(
+      ort,
+      manifest,
+      manifest.decoder === "kv" && graphs["decoder-kv.onnx"] !== undefined,
     );
-    this.pastNames = this.decoder.inputNames.filter((n: string) => n.startsWith("past_"));
+    model.encoder = await ort.InferenceSession.create(graphs["encoder.onnx"]);
+    model.decoder = await ort.InferenceSession.create(
+      model.kv ? graphs["decoder-kv.onnx"] : graphs["decoder.onnx"],
+    );
+    model.pastNames = model.decoder.inputNames.filter((n: string) =>
+      n.startsWith("past_"),
+    );
+    return model;
   }
 
   get id(): string {
@@ -76,12 +90,20 @@ export class Byt5 {
   }
 
   private async greedyKv(hidden: any, maxSeqLength: number): Promise<number[]> {
-    const meta: any = (this.decoder as any).inputMetadata ?? {};
-    let pasts: Record<string, any> = {};
+    // inputMetadata is position-indexed [{name, shape}]; past shapes are
+    // [batch?, heads, past_seq?, d_kv] with heads/d_kv static numbers
+    const inputs: { name: string; shape: (number | string)[] }[] = Array.from(
+      (this.decoder as any).inputMetadata ?? [],
+    );
+    const shapeByName = new Map(inputs.map((m) => [m.name, m.shape]));
+    const pasts: Record<string, any> = {};
     for (const name of this.pastNames) {
-      const shape: (number | string)[] = meta[name]?.shape ?? [];
-      const heads = typeof shape[1] === "number" ? shape[1] : 4;
-      const dKv = typeof shape[3] === "number" ? shape[3] : 8;
+      const shape = shapeByName.get(name) ?? [];
+      const heads = shape[1];
+      const dKv = shape[3];
+      if (typeof heads !== "number" || typeof dKv !== "number") {
+        throw new Error(`cannot determine KV dims for ${name} from graph metadata`);
+      }
       pasts[name] = new this.ort.Tensor("float32", new Float32Array(0), [1, heads, 0, dKv]);
     }
     let current = [PAD_ID];
