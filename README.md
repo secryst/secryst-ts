@@ -9,7 +9,7 @@ This package is the TypeScript/Node crystal of the family (Python:
 Ruby: `gem secryst` — [secryst/secryst](https://github.com/secryst/secryst)).
 All crystals implement the **interscript-ml contract**: the `models.yaml`
 index, IMF v1 model zips (sha256-verified), and shared golden sets
-([interscript/ml-models](https://github.com/interscript/ml-models)).
+([interscript/interscript-ml](https://github.com/interscript/interscript-ml)).
 
 ## Install
 
