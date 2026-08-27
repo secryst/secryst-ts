@@ -12,9 +12,11 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v7
+      # npm >= 11.5 sends the OIDC token as the publish credential;
+      # npm 10 only signs provenance and the PUT lands unauthenticated (E404)
       - uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npx tsc
