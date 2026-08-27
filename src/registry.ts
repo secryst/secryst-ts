@@ -14,7 +14,7 @@ export class RegistryError extends Error {}
 export const ENV_INDEX = "SECRYST_INDEX";
 export const ENV_CACHE = "SECRYST_CACHE";
 export const DEFAULT_INDEX_URL =
-  "https://raw.githubusercontent.com/interscript/interscript-ml/main/models.yaml";
+  "https://github.com/interscript/interscript-ml/releases/download/index-v1/models-index.yaml";
 
 export interface Part { url: string; sha256: string; size: number; }
 export interface IndexEntry {
@@ -26,11 +26,41 @@ export function cacheDir(): string {
   return process.env[ENV_CACHE] ?? path.join(os.homedir(), ".cache", "secryst");
 }
 
+async function sha256Bytes(data: Uint8Array): Promise<string> {
+  return createHash("sha256").update(data).digest("hex");
+}
+
+async function fetchHttpBytes(url: string): Promise<Uint8Array> {
+  const res = await fetch(url);
+  if (!res.ok) throw new RegistryError(`fetch failed: ${url} -> ${res.status}`);
+  return new Uint8Array(await res.arrayBuffer());
+}
+
 export async function loadIndex(indexUrl?: string): Promise<Record<string, IndexEntry>> {
   const source = indexUrl ?? process.env[ENV_INDEX] ?? DEFAULT_INDEX_URL;
-  const text = source.startsWith("http://") || source.startsWith("https://")
-    ? await (await fetch(source)).text()
-    : await readFile(source, "utf-8");
+  let text: string;
+  if (source.startsWith("http://") || source.startsWith("https://")) {
+    const bytes = await fetchHttpBytes(source);
+    const sidecarRes = await fetch(`${source}.sha256`);
+    if (!sidecarRes.ok) {
+      throw new RegistryError(
+        `index sha256 sidecar missing: ${source}.sha256 -> ${sidecarRes.status}`,
+      );
+    }
+    const expected = (await sidecarRes.text()).trim().split(/\s+/)[0];
+    if (!expected || !/^[0-9a-f]{64}$/i.test(expected)) {
+      throw new RegistryError(`index sha256 sidecar malformed: ${source}.sha256`);
+    }
+    const actual = await sha256Bytes(bytes);
+    if (actual !== expected.toLowerCase()) {
+      throw new RegistryError(
+        `index sha256 mismatch: got ${actual}, sidecar says ${expected.toLowerCase()}`,
+      );
+    }
+    text = new TextDecoder().decode(bytes);
+  } else {
+    text = await readFile(source, "utf-8");
+  }
   const raw = parseYaml(text) as Record<string, any>;
   if (!raw || typeof raw !== "object" || raw.version !== 1) {
     throw new RegistryError("index must be a mapping with version: 1");
