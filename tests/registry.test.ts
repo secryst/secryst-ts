@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { loadIndex, resolve, RegistryError } from "../src/registry.js";
+import { loadIndex, resolve, RegistryError, DEFAULT_INDEX_URL } from "../src/registry.js";
 
 async function tmp(): Promise<string> {
   return await mkdtemp(path.join(os.tmpdir(), "secryst-reg-"));
@@ -53,4 +53,47 @@ test("sha256 mismatch fails loudly", async () => {
   await writeFile(index, "version: 1\nmodels:\n  bad-1.0:\n    filename: b.zip\n    url: file:///nonexistent\n    sha256: deadbeef\n");
   process.env.SECRYST_CACHE = path.join(dir, "cache2");
   await assert.rejects(() => resolve("bad-1.0", index), RegistryError);
+});
+
+test("DEFAULT_INDEX_URL pins a GitHub Release asset, never raw", () => {
+  assert.match(
+    DEFAULT_INDEX_URL,
+    /^https:\/\/github\.com\/interscript\/interscript-ml\/releases\/download\/index-v\d+\/models-index\.yaml$/,
+  );
+  assert.doesNotMatch(DEFAULT_INDEX_URL, /raw\.githubusercontent/);
+});
+
+test("HTTP index fetch verifies the .sha256 sidecar before parsing", async () => {
+  const { createServer } = await import("node:http");
+  const body = "version: 1\nmodels: {}\n";
+  const good = createHash("sha256").update(body).digest("hex");
+  const bad = "0".repeat(64);
+
+  async function withServer(sidecar: string | null, fn: (url: string) => Promise<void>) {
+    const server = createServer((req, res) => {
+      if (req.url === "/models-index.yaml") {
+        res.writeHead(200); res.end(body); return;
+      }
+      if (req.url === "/models-index.yaml.sha256") {
+        if (sidecar === null) { res.writeHead(404); res.end(); return; }
+        res.writeHead(200); res.end(`${sidecar}  models-index.yaml\n`); return;
+      }
+      res.writeHead(404); res.end();
+    });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    const { port } = server.address() as { port: number };
+    try { await fn(`http://127.0.0.1:${port}/models-index.yaml`); }
+    finally { await new Promise<void>((r) => server.close(() => r())); }
+  }
+
+  await withServer(good, async (url) => {
+    const entries = await loadIndex(url);
+    assert.deepEqual(entries, {});
+  });
+  await withServer(bad, async (url) => {
+    await assert.rejects(() => loadIndex(url), /index sha256 mismatch/);
+  });
+  await withServer(null, async (url) => {
+    await assert.rejects(() => loadIndex(url), /index sha256/);
+  });
 });
