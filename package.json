@@ -6,7 +6,11 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "tsx --test tests/*.test.ts"
@@ -19,7 +23,9 @@
     "onnxruntime-node": "^1.19.0"
   },
   "peerDependenciesMeta": {
-    "onnxruntime-node": { "optional": true }
+    "onnxruntime-node": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
@@ -27,8 +33,20 @@
     "tsx": "^4.16.0",
     "typescript": "^5.5.0"
   },
-  "engines": { "node": ">=18" },
-  "repository": "secryst/secryst-ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/secryst/secryst-ts.git"
+  },
   "homepage": "https://secryst.github.io",
-  "keywords": ["transliteration", "g2p", "diacritization", "onnx", "interscript", "byt5"]
+  "keywords": [
+    "transliteration",
+    "g2p",
+    "diacritization",
+    "onnx",
+    "interscript",
+    "byt5"
+  ]
 }
