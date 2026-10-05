@@ -58,7 +58,7 @@ test("sha256 mismatch fails loudly", async () => {
 test("DEFAULT_INDEX_URL pins a GitHub Release asset, never raw", () => {
   assert.match(
     DEFAULT_INDEX_URL,
-    /^https:\/\/github\.com\/interscript\/interscript-ml\/releases\/download\/index-v\d+\/models-index\.yaml$/,
+    /^https:\/\/github\.com\/interscript\/interscript-ml\/releases\/download\/index-v6\/models-index\.yaml$/,
   );
   assert.doesNotMatch(DEFAULT_INDEX_URL, /raw\.githubusercontent/);
 });
