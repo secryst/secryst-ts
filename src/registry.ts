@@ -14,7 +14,7 @@ export class RegistryError extends Error {}
 export const ENV_INDEX = "SECRYST_INDEX";
 export const ENV_CACHE = "SECRYST_CACHE";
 export const DEFAULT_INDEX_URL =
-  "https://github.com/interscript/interscript-ml/releases/download/index-v5/models-index.yaml";
+  "https://github.com/interscript/interscript-ml/releases/download/index-v6/models-index.yaml";
 
 export interface Part { url: string; sha256: string; size: number; }
 export interface IndexEntry {
