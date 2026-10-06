@@ -1,3 +1,9 @@
+# DEPRECATED
+
+This package has moved: use **`interscript`** (npm) - the secryst runtime is now the `ml` module of the unified interscript package.
+
+---
+
 # secryst — TypeScript crystal
 
 **Secryst** is coined from *scrying* + *crystal*: gazing into an opaque
